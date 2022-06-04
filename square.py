@@ -15,8 +15,15 @@ class Square(pygame.sprite.Sprite):
     def is_pressed(self, event_pos):
         return self.rect.collidepoint(event_pos)
 
-    def set_color(self, screen, color):
-        self.image.fill(color)
+    def change_color(self, image, color):
+        colouredImage = pygame.Surface(image.get_size())
+        colouredImage.fill(color)
+        
+        finalImage = image.copy()
+        finalImage.blit(colouredImage, (0, 0), special_flags = pygame.BLEND_MULT)
+        return finalImage
 
-        screen.blit(self.image, self.pos)
-        print("dsfaasd")
+    def set_color(self, color, screen):
+        color_image = self.change_color(self.image, color)
+        self.image = color_image
+        screen.blit(color_image, color_image.get_rect(center=self.pos))

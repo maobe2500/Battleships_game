@@ -1,5 +1,7 @@
 import pygame
 from square import Square
+from network import Network
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -13,8 +15,9 @@ class Game:
         self.SCREEN = pygame.display.set_mode((self.WINDOW_HEIGHT, self.WINDOW_WIDTH))
         self.CLOCK = pygame.time.Clock()
         self.SCREEN.fill(self.BLUE)
-
         self.sea = {}
+
+        self.network = Network()
 
     def event_check(self):
         for event in pygame.event.get():
@@ -22,6 +25,7 @@ class Game:
                 pygame.quit()
             if event.type == pygame.MOUSEBUTTONUP:
                 self.check_click(event.pos)
+
 
     def drawGrid(self):
         for x in range(0, self.WINDOW_WIDTH, self.BLOCK_SIZE):
@@ -37,7 +41,9 @@ class Game:
     def check_click(self, event_pos):
         for square in self.sea.values():
             if square.is_pressed(event_pos):
-                square.set_color(self.SCREEN, (250,25,25))
+                square.set_color((250,25,25), self.SCREEN)
+                self.network.send(f"{event_pos}")
+                pygame.display.update()
                 
 
     def is_a_hit(self):
