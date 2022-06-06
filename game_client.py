@@ -1,4 +1,5 @@
 import pygame
+import sys
 from square import Square
 from network import Network
 
@@ -8,54 +9,61 @@ class Game:
         self.BLACK = (0, 0, 0)
         self.WHITE = (200, 200, 200)
         self.BLUE = (44, 132, 232)
-        self.WINDOW_HEIGHT = 900
-        self.WINDOW_WIDTH = 900
-        self.BLOCK_SIZE = int(self.WINDOW_HEIGHT/30)
+        self.RED = (250, 134, 123)
+        self.BLOCK_SIZE = 20
+        self.WIDTH = 400
+        self.HEIGHT = 400
+        self.CHAT_AREA = 200
 
-        self.SCREEN = pygame.display.set_mode((self.WINDOW_HEIGHT, self.WINDOW_WIDTH))
-        self.CLOCK = pygame.time.Clock()
+        self.SCREEN = pygame.display.set_mode((self.WIDTH + self.CHAT_AREA, self.HEIGHT))
         self.SCREEN.fill(self.BLUE)
+        self.ships_left = 10
         self.sea = {}
+        self.network = Network(self.SCREEN)
 
-        self.network = Network()
+        self.init_grid()
 
     def event_check(self):
+        self.network.loop()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONUP:
                 self.check_click(event.pos)
 
-
-    def drawGrid(self):
-        for x in range(0, self.WINDOW_WIDTH, self.BLOCK_SIZE):
-            for y in range(0, self.WINDOW_HEIGHT, self.BLOCK_SIZE):
-                pos = (x + self.BLOCK_SIZE/2, y + self.BLOCK_SIZE/2)
-                s = Square(pos, "./Resources/sea_small.png", self.BLOCK_SIZE)
-                s.draw(self.SCREEN)
-                #rect = pygame.Rect(x, y, blockSize, blockSize)
-                #pygame.draw.rect(self.SCREEN, self.WHITE, rect, 1)
+    def init_grid(self):
+        for i in range(0, self.WIDTH, self.BLOCK_SIZE):  
+            for j in range(0, self.HEIGHT, self.BLOCK_SIZE): 
+                pos = (i + self.BLOCK_SIZE//2, j + self.BLOCK_SIZE//2)
+                s = Square(pos, self.BLOCK_SIZE)
                 self.sea[pos] = s
+
+    def draw_grid(self):
+        for square in self.sea.values():
+            if square.pos in self.network.enemy_hits:
+                square.set_color(self.RED)
+            square.draw(self.SCREEN)
         pygame.display.update()
 
     def check_click(self, event_pos):
         for square in self.sea.values():
             if square.is_pressed(event_pos):
-                square.set_color((250,25,25), self.SCREEN)
-                self.network.send(f"{event_pos}")
-                pygame.display.update()
-                
+                print(f"square at {square.pos} is clicked, new color: {square.color}")
+                if self.ships_left > 0:
+                    square.set_color(self.BLACK)
+                    self.network.ship_locations[square] = {"hits": 0, "max_hits":1}
+                    self.ships_left -= 1
+                else:
+                    square.set_color(self.BLUE)
+                    self.network.hits.append(square.pos)
 
-    def is_a_hit(self):
-        pass
-
-    def shoot(self):
-        pass
-
+ 
     def main_loop(self):
         while True:
             self.event_check()
-            self.drawGrid()
+            self.draw_grid()
+    
 
 def main():
     g = Game()
